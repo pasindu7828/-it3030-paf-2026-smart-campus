@@ -1,6 +1,7 @@
 package com.example.demo.controllers;
 
 import com.example.demo.dto.TicketDTO;
+import com.example.demo.dto.TicketUpdateDTO;
 import com.example.demo.model.Ticket;
 import com.example.demo.model.User;
 import com.example.demo.repository.UserRepository;
@@ -63,6 +64,14 @@ public class TicketController {
         return ResponseEntity.ok(tickets);
     }
 
+    // Get technicians for assign dropdown (ADMIN, MANAGER)
+    @GetMapping("/technicians")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<?> getTechnicians() {
+        List<User> technicians = ticketService.getTechnicians(userRepository);
+        return ResponseEntity.ok(technicians);
+    }
+
     // Get ticket by ID
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER', 'TECHNICIAN', 'MANAGER', 'ADMIN')")
@@ -70,21 +79,56 @@ public class TicketController {
         try {
             Ticket ticket = ticketService.getTicketById(id);
             User currentUser = getUserFromAuth(auth);
-            
-            // Check permission: owner, assigned technician, or admin
+
+            // Check permission: owner, assigned technician, or admin/manager
             boolean isOwner = ticket.getReportedBy().getId().equals(currentUser.getId());
-            boolean isAssigned = ticket.getAssignedTo() != null && 
+            boolean isAssigned = ticket.getAssignedTo() != null &&
                                  ticket.getAssignedTo().getId().equals(currentUser.getId());
-            boolean isAdmin = currentUser.getRole().equals("ADMIN") || 
+            boolean isAdmin = currentUser.getRole().equals("ADMIN") ||
                               currentUser.getRole().equals("MANAGER");
-            
+
             if (!isOwner && !isAssigned && !isAdmin) {
                 return ResponseEntity.status(403).body(Map.of("error", "Access denied"));
             }
-            
+
             return ResponseEntity.ok(ticket);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    // Update my own ticket (STUDENT, LECTURER)
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER')")
+    public ResponseEntity<?> updateTicket(@PathVariable Long id,
+                                          @RequestBody TicketUpdateDTO dto,
+                                          Authentication auth) {
+        try {
+            User user = getUserFromAuth(auth);
+            Ticket ticket = ticketService.updateTicket(id, dto, user.getId());
+
+            return ResponseEntity.ok(Map.of(
+                "message", "Ticket updated successfully",
+                "ticket", ticket
+            ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // Delete my own ticket (STUDENT, LECTURER)
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER')")
+    public ResponseEntity<?> deleteTicket(@PathVariable Long id, Authentication auth) {
+        try {
+            User user = getUserFromAuth(auth);
+            ticketService.deleteTicket(id, user.getId());
+
+            return ResponseEntity.ok(Map.of(
+                "message", "Ticket deleted successfully"
+            ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -94,7 +138,6 @@ public class TicketController {
     public ResponseEntity<?> assignTechnician(@PathVariable Long id, @RequestBody Map<String, Long> request) {
         try {
             Long technicianId = request.get("technicianId");
-            // ✅ FIXED: Pass userRepository to the service method
             Ticket ticket = ticketService.assignTechnician(id, technicianId, userRepository);
             return ResponseEntity.ok(Map.of(
                 "message", "Technician assigned successfully",
@@ -105,7 +148,7 @@ public class TicketController {
         }
     }
 
-    // Update ticket status (TECHNICIAN, ADMIN)
+    // Update ticket status (TECHNICIAN, ADMIN, MANAGER)
     @PutMapping("/{id}/status")
     @PreAuthorize("hasAnyRole('TECHNICIAN', 'ADMIN', 'MANAGER')")
     public ResponseEntity<?> updateStatus(@PathVariable Long id, @RequestBody Map<String, String> request) {
@@ -167,6 +210,14 @@ public class TicketController {
     @PreAuthorize("hasAnyRole('TECHNICIAN', 'MANAGER', 'ADMIN')")
     public ResponseEntity<?> getTicketsByPriority(@PathVariable String priority) {
         List<Ticket> tickets = ticketService.getTicketsByPriority(priority);
+        return ResponseEntity.ok(tickets);
+    }
+
+    @GetMapping("/assigned/me")
+    @PreAuthorize("hasRole('TECHNICIAN')")
+    public ResponseEntity<?> getMyAssignedTickets(Authentication auth) {
+        User user = getUserFromAuth(auth);
+        List<Ticket> tickets = ticketService.getTechnicianTickets(user.getId());
         return ResponseEntity.ok(tickets);
     }
 
