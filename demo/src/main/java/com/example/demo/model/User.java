@@ -18,6 +18,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 
+// entity for user
 public class User {
 
     @Id
