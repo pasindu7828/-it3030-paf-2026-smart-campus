@@ -193,7 +193,6 @@ Frontend runs on:
 
 ## 📊 Additional Features (Optional Enhancements)
 
-* QR Code check-in system
 * Admin analytics dashboard
 * Ticket SLA tracking
 * Notification preferences
