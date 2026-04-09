@@ -151,7 +151,7 @@ smart-campus/
 * Node.js (v18+)
 * Java JDK 17+
 * Maven
-* MongoDB / MySQL
+* MySQL
 
 ---
 
