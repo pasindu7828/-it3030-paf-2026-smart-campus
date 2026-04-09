@@ -36,7 +36,7 @@ This system is built using a **Spring Boot REST API** and a **React web applicat
 * React.js
 * Axios
 * React Router
-* Material UI / Tailwind CSS
+* Tailwind CSS
 
 ### 🗄️ Database
 
