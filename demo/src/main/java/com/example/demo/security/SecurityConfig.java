@@ -40,7 +40,7 @@ public class SecurityConfig {
             .logout(logout -> logout.logoutSuccessUrl("/").permitAll())
             .exceptionHandling(exception -> exception.authenticationEntryPoint((request, response, authException) -> {
                 response.setContentType("application/json");
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);//401 status code
                 response.getWriter().write("{\"error\": \"Unauthorized\"}");
             }));
 
