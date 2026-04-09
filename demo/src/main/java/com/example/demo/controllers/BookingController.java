@@ -40,7 +40,7 @@ public class BookingController {
     public ResponseEntity<?> getMyBookings(Authentication auth) {
         User user = getUserFromAuth(auth);
         List<Booking> bookings = bookingService.getUserBookings(user.getId());
-        return ResponseEntity.ok(bookings);
+        return ResponseEntity.ok(bookings);//200 status code
     }
 
     @GetMapping("/pending")
@@ -51,7 +51,7 @@ public class BookingController {
     }
 
     @PutMapping("/{id}/approve")//update approve reject sections for manager and admin
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")//403 forbidden status code
     public ResponseEntity<?> approveBooking(@PathVariable Long id) {
         try {
             Booking booking = bookingService.approveBooking(id);
@@ -60,7 +60,7 @@ public class BookingController {
                 "booking", booking
             ));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));//400 status code
         }
     }
 
