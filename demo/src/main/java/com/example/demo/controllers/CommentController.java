@@ -22,7 +22,7 @@ public class CommentController {
     private final CommentService commentService;
     private final UserRepository userRepository;
 
-    // Add comment to ticket
+    // Add comment to ticket.
     @PostMapping("/ticket/{ticketId}")
     @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER', 'TECHNICIAN', 'MANAGER', 'ADMIN')")
     public ResponseEntity<?> addComment(@PathVariable Long ticketId, 
@@ -40,7 +40,7 @@ public class CommentController {
         }
     }
 
-    // Get comments for a ticket
+    // Get comments for a ticket.
     @GetMapping("/ticket/{ticketId}")
     @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER', 'TECHNICIAN', 'MANAGER', 'ADMIN')")
     public ResponseEntity<?> getTicketComments(@PathVariable Long ticketId) {
@@ -48,7 +48,7 @@ public class CommentController {
         return ResponseEntity.ok(comments);
     }
 
-    // Update comment
+    // Update comment.
     @PutMapping("/{commentId}")
     @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER', 'TECHNICIAN', 'MANAGER', 'ADMIN')")
     public ResponseEntity<?> updateComment(@PathVariable Long commentId,
@@ -66,7 +66,7 @@ public class CommentController {
         }
     }
 
-    // Delete comment
+    // Delete comment.
     @DeleteMapping("/{commentId}")
     @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER', 'TECHNICIAN', 'MANAGER', 'ADMIN')")
     public ResponseEntity<?> deleteComment(@PathVariable Long commentId, Authentication auth) {
