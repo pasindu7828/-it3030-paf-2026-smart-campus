@@ -50,7 +50,7 @@ public class BookingController {
         return ResponseEntity.ok(bookings);
     }
 
-    @PutMapping("/{id}/approve")
+    @PutMapping("/{id}/approve")//update approve reject sections for manager and admin
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<?> approveBooking(@PathVariable Long id) {
         try {
