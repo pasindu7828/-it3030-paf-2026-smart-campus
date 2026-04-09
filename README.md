@@ -40,7 +40,7 @@ This system is built using a **Spring Boot REST API** and a **React web applicat
 
 ### 🗄️ Database
 
-* MySQL (depending on implementation)
+* MySQL 
 
 ### ⚙️ DevOps
 
