@@ -63,8 +63,8 @@ public class FacilityService {
         return facilityRepository.findByStatus(FacilityStatus.ACTIVE);
     }
 
-    // Search with filters
-    public List<Facility> searchFacilities(String type, Integer minCapacity, String location, String status) {
+    // Search with filters (type, capacity, location, status)
+    public List<Facility> searchFacilities(String type, Integer minCapacity, String location, String status) {  // New method for searching with multiple filters
         FacilityStatus facilityStatus = null;
         if (status != null && !status.isEmpty()) {
             try {
