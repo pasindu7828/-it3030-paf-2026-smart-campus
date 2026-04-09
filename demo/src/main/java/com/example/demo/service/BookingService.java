@@ -21,7 +21,7 @@ public class BookingService {
 
     private final BookingRepository bookingRepository;
     private final FacilityService facilityService;  // ✅ Inject FacilityService
-    private final NotificationService notificationService;
+    private final NotificationService notificationService;//add notification service
 
     // Create a new booking
     @Transactional

@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/bookings")
+@RequestMapping("/api/bookings")//endpoint for booking management
 @RequiredArgsConstructor
 public class BookingController {
 
@@ -50,7 +50,7 @@ public class BookingController {
         return ResponseEntity.ok(bookings);
     }
 
-    @PutMapping("/{id}/approve")
+    @PutMapping("/{id}/approve")//update approve reject sections for manager and admin
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<?> approveBooking(@PathVariable Long id) {
         try {
