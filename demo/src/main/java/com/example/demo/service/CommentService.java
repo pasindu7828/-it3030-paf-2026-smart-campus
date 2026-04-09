@@ -76,7 +76,7 @@ public class CommentService {
         return commentRepository.save(comment);
     }
 
-    // Delete comment (author or admin)
+    // Delete comment (author or admin) 
     @Transactional
     public void deleteComment(Long commentId, User currentUser) {
         Comment comment = commentRepository.findById(commentId)
