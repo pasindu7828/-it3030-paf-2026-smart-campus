@@ -29,7 +29,7 @@ public class TicketService {
     private static final int MAX_ATTACHMENTS = 3;
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
-    // Create a new ticket
+    // Create a new ticket 
     @Transactional
     public Ticket createTicket(TicketDTO dto, User user) {
         // Validate attachments

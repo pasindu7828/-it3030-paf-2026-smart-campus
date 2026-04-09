@@ -4,7 +4,7 @@ import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
-@Data
+@Data 
 public class TicketDTO {
     private String title;
     private String description;
@@ -14,5 +14,5 @@ public class TicketDTO {
     private String resourceName;
     private String contactEmail;
     private String contactPhone;
-    private List<MultipartFile> attachments;  // Up to 3 images max size 6mb
+    private List<MultipartFile> attachments;  // Up to 3 images max size 
 }
