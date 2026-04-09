@@ -14,5 +14,5 @@ public class TicketDTO {
     private String resourceName;
     private String contactEmail;
     private String contactPhone;
-    private List<MultipartFile> attachments;  // Up to 3 images
+    private List<MultipartFile> attachments;  // Up to 3 images max size 6mb
 }

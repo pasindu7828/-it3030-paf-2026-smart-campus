@@ -197,7 +197,7 @@ public class TicketController {
         }
     }
 
-    // Get tickets by status
+    // Get tickets by status to all
     @GetMapping("/status/{status}")
     @PreAuthorize("hasAnyRole('TECHNICIAN', 'MANAGER', 'ADMIN')")
     public ResponseEntity<?> getTicketsByStatus(@PathVariable String status) {
