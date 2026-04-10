@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/bookings")//endpoint for booking management
+@RequestMapping("/api/bookings")
 @RequiredArgsConstructor
 public class BookingController {
 
@@ -40,7 +40,7 @@ public class BookingController {
     public ResponseEntity<?> getMyBookings(Authentication auth) {
         User user = getUserFromAuth(auth);
         List<Booking> bookings = bookingService.getUserBookings(user.getId());
-        return ResponseEntity.ok(bookings);//200 status code
+        return ResponseEntity.ok(bookings);
     }
 
     @GetMapping("/pending")
@@ -50,8 +50,8 @@ public class BookingController {
         return ResponseEntity.ok(bookings);
     }
 
-    @PutMapping("/{id}/approve")//update approve reject sections for manager and admin
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")//403 forbidden status code
+    @PutMapping("/{id}/approve")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<?> approveBooking(@PathVariable Long id) {
         try {
             Booking booking = bookingService.approveBooking(id);
@@ -60,7 +60,7 @@ public class BookingController {
                 "booking", booking
             ));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));//400 status code
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -94,18 +94,32 @@ public class BookingController {
         }
     }
 
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER', 'MANAGER', 'ADMIN')")
+    public ResponseEntity<?> deleteBooking(@PathVariable Long id, Authentication auth) {
+        try {
+            User user = getUserFromAuth(auth);
+            bookingService.deleteBooking(id, user);
+            return ResponseEntity.ok(Map.of(
+                "message", "Booking deleted successfully"
+            ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @GetMapping("/check-availability")
     @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER', 'MANAGER', 'ADMIN')")
     public ResponseEntity<?> checkAvailability(
             @RequestParam Long facilityId,
             @RequestParam String startTime,
             @RequestParam String endTime) {
-        
+
         LocalDateTime start = LocalDateTime.parse(startTime);
         LocalDateTime end = LocalDateTime.parse(endTime);
-        
+
         boolean isAvailable = !bookingService.hasConflict(facilityId, start, end);
-        
+
         return ResponseEntity.ok(Map.of(
             "available", isAvailable,
             "facilityId", facilityId,
@@ -137,7 +151,7 @@ public class BookingController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER')")
-    public ResponseEntity<?> updateBooking(@PathVariable Long id, 
+    public ResponseEntity<?> updateBooking(@PathVariable Long id,
                                            @RequestBody BookingDTO dto,
                                            Authentication auth) {
         try {
@@ -145,6 +159,47 @@ public class BookingController {
             Booking booking = bookingService.updateBooking(id, dto, user);
             return ResponseEntity.ok(Map.of(
                 "message", "Booking updated successfully",
+                "booking", booking
+            ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // =========================
+    // QR CODE / CHECK-IN ENDPOINTS
+    // =========================
+
+    @GetMapping("/{id}/qr")
+    @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER', 'MANAGER', 'ADMIN', 'TECHNICIAN')")
+    public ResponseEntity<?> getBookingQr(@PathVariable Long id, Authentication auth) {
+        try {
+            User user = getUserFromAuth(auth);
+            Map<String, Object> qrData = bookingService.getBookingQrDetails(id, user);
+            return ResponseEntity.ok(qrData);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/qr/verify/{token}")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN', 'TECHNICIAN')")
+    public ResponseEntity<?> verifyQr(@PathVariable String token) {
+        try {
+            Map<String, Object> result = bookingService.verifyQrToken(token);
+            return ResponseEntity.ok(result);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/qr/check-in/{token}")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN', 'TECHNICIAN')")
+    public ResponseEntity<?> checkInByQr(@PathVariable String token) {
+        try {
+            Booking booking = bookingService.checkInByQrToken(token);
+            return ResponseEntity.ok(Map.of(
+                "message", "Booking checked in successfully",
                 "booking", booking
             ));
         } catch (RuntimeException e) {
