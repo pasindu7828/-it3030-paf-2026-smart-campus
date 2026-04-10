@@ -413,7 +413,7 @@ public class TicketService {
         return updatedTicket;
     }
 
-    // Reject ticket (Admin only)
+    // Reject the ticket (Admin only)
     @Transactional
     public Ticket rejectTicket(Long ticketId, String reason) {
         Ticket ticket = getTicketById(ticketId);

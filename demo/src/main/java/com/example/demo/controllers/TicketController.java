@@ -12,6 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,12 +31,41 @@ public class TicketController {
         try {
             User user = getUserFromAuth(auth);
             Ticket ticket = ticketService.createTicket(dto, user);
-            return ResponseEntity.ok(Map.of(
-                "message", "Ticket created successfully",
-                "ticket", ticket
-            ));
+
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("message", "Ticket created successfully");
+            response.put("ticket", ticket);
+
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(errorBody(e, "Failed to create ticket"));
+        }
+    }
+
+    // Duplicate ticket check (STUDENT, LECTURER)
+    @PostMapping("/check-duplicate")
+    @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER')")
+    public ResponseEntity<?> checkDuplicateTickets(@RequestBody Map<String, String> request) {
+        try {
+            String title = request.getOrDefault("title", "");
+            String description = request.getOrDefault("description", "");
+            String location = request.getOrDefault("location", "");
+            String resourceName = request.getOrDefault("resourceName", "");
+            String category = request.getOrDefault("category", "");
+
+            Map<String, Object> result = ticketService.checkDuplicateTickets(
+                    title,
+                    description,
+                    location,
+                    resourceName,
+                    category
+            );
+
+            return ResponseEntity.ok(result);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(errorBody(e, "Failed to check duplicate tickets"));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(errorBody(e, "Unexpected error while checking duplicate tickets"));
         }
     }
 
@@ -80,12 +110,11 @@ public class TicketController {
             Ticket ticket = ticketService.getTicketById(id);
             User currentUser = getUserFromAuth(auth);
 
-            // Check permission: owner, assigned technician, or admin/manager
             boolean isOwner = ticket.getReportedBy().getId().equals(currentUser.getId());
             boolean isAssigned = ticket.getAssignedTo() != null &&
-                                 ticket.getAssignedTo().getId().equals(currentUser.getId());
+                    ticket.getAssignedTo().getId().equals(currentUser.getId());
             boolean isAdmin = currentUser.getRole().equals("ADMIN") ||
-                              currentUser.getRole().equals("MANAGER");
+                    currentUser.getRole().equals("MANAGER");
 
             if (!isOwner && !isAssigned && !isAdmin) {
                 return ResponseEntity.status(403).body(Map.of("error", "Access denied"));
@@ -107,12 +136,13 @@ public class TicketController {
             User user = getUserFromAuth(auth);
             Ticket ticket = ticketService.updateTicket(id, dto, user.getId());
 
-            return ResponseEntity.ok(Map.of(
-                "message", "Ticket updated successfully",
-                "ticket", ticket
-            ));
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("message", "Ticket updated successfully");
+            response.put("ticket", ticket);
+
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(errorBody(e, "Failed to update ticket"));
         }
     }
 
@@ -124,11 +154,12 @@ public class TicketController {
             User user = getUserFromAuth(auth);
             ticketService.deleteTicket(id, user.getId());
 
-            return ResponseEntity.ok(Map.of(
-                "message", "Ticket deleted successfully"
-            ));
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("message", "Ticket deleted successfully");
+
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(errorBody(e, "Failed to delete ticket"));
         }
     }
 
@@ -139,12 +170,14 @@ public class TicketController {
         try {
             Long technicianId = request.get("technicianId");
             Ticket ticket = ticketService.assignTechnician(id, technicianId, userRepository);
-            return ResponseEntity.ok(Map.of(
-                "message", "Technician assigned successfully",
-                "ticket", ticket
-            ));
+
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("message", "Technician assigned successfully");
+            response.put("ticket", ticket);
+
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(errorBody(e, "Failed to assign technician"));
         }
     }
 
@@ -156,12 +189,14 @@ public class TicketController {
             String status = request.get("status");
             String notes = request.getOrDefault("notes", null);
             Ticket ticket = ticketService.updateStatus(id, status, notes);
-            return ResponseEntity.ok(Map.of(
-                "message", "Status updated successfully",
-                "ticket", ticket
-            ));
+
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("message", "Status updated successfully");
+            response.put("ticket", ticket);
+
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(errorBody(e, "Failed to update status"));
         }
     }
 
@@ -172,12 +207,14 @@ public class TicketController {
         try {
             String reason = request.getOrDefault("reason", "No reason provided");
             Ticket ticket = ticketService.rejectTicket(id, reason);
-            return ResponseEntity.ok(Map.of(
-                "message", "Ticket rejected",
-                "ticket", ticket
-            ));
+
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("message", "Ticket rejected");
+            response.put("ticket", ticket);
+
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(errorBody(e, "Failed to reject ticket"));
         }
     }
 
@@ -188,16 +225,18 @@ public class TicketController {
         try {
             String notes = request.get("notes");
             Ticket ticket = ticketService.addResolutionNotes(id, notes);
-            return ResponseEntity.ok(Map.of(
-                "message", "Ticket resolved",
-                "ticket", ticket
-            ));
+
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("message", "Ticket resolved");
+            response.put("ticket", ticket);
+
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(errorBody(e, "Failed to resolve ticket"));
         }
     }
 
-    // Get tickets by status to all
+    // Get tickets by status
     @GetMapping("/status/{status}")
     @PreAuthorize("hasAnyRole('TECHNICIAN', 'MANAGER', 'ADMIN')")
     public ResponseEntity<?> getTicketsByStatus(@PathVariable String status) {
@@ -234,5 +273,17 @@ public class TicketController {
         String email = auth.getName();
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    private Map<String, Object> errorBody(Exception e, String fallbackMessage) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        String message = e.getMessage();
+
+        if (message == null || message.isBlank()) {
+            message = fallbackMessage;
+        }
+
+        body.put("error", message);
+        return body;
     }
 }

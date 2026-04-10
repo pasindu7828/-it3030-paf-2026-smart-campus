@@ -39,7 +39,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler{
         String role = user.getRole();
 
         // Redirect with both token and role
-        response.sendRedirect("http://localhost:3000/oauth-success?token=" + token + "&role=" + role);
+        response.sendRedirect("http://localhost:5173/oauth-success?token=" + token + "&role=" + role);
     }
 
 }
