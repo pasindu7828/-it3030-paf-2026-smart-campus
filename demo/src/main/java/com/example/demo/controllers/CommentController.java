@@ -66,7 +66,7 @@ public class CommentController {
         }
     }
 
-    // Delete comment
+    // Delete comment.
     @DeleteMapping("/{commentId}")
     @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER', 'TECHNICIAN', 'MANAGER', 'ADMIN')")
     public ResponseEntity<?> deleteComment(@PathVariable Long commentId, Authentication auth) {

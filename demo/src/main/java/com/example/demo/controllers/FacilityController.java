@@ -4,9 +4,11 @@ import com.example.demo.dto.FacilityDTO;
 import com.example.demo.model.Facility;
 import com.example.demo.service.FacilityService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ModelAttribute;
 
 import java.util.List;
 import java.util.Map;
@@ -38,6 +40,14 @@ public class FacilityController {
         }
     }
 
+    // Facility analytics (Manager/Admin)
+    @GetMapping("/analytics/summary")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+    public ResponseEntity<?> getFacilityAnalytics() {
+        Map<String, Object> analytics = facilityService.getFacilityAnalytics();
+        return ResponseEntity.ok(analytics);
+    }
+
     // Search facilities with filters
     @GetMapping("/search")
     @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER', 'MANAGER', 'ADMIN')")
@@ -46,7 +56,7 @@ public class FacilityController {
             @RequestParam(required = false) Integer minCapacity,
             @RequestParam(required = false) String location,
             @RequestParam(required = false) String status) {
-        
+
         List<Facility> facilities = facilityService.searchFacilities(type, minCapacity, location, status);
         return ResponseEntity.ok(facilities);
     }
@@ -68,9 +78,9 @@ public class FacilityController {
     }
 
     // Create new facility (Admin only)
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> createFacility(@RequestBody FacilityDTO dto) {
+    public ResponseEntity<?> createFacility(@ModelAttribute FacilityDTO dto) {
         try {
             Facility facility = facilityService.createFacility(dto);
             return ResponseEntity.ok(Map.of(
@@ -83,9 +93,9 @@ public class FacilityController {
     }
 
     // Update facility (Admin only)
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> updateFacility(@PathVariable Long id, @RequestBody FacilityDTO dto) {
+    public ResponseEntity<?> updateFacility(@PathVariable Long id, @ModelAttribute FacilityDTO dto) {
         try {
             Facility facility = facilityService.updateFacility(id, dto);
             return ResponseEntity.ok(Map.of(
