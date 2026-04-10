@@ -5,8 +5,10 @@ import com.example.demo.model.BookingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
@@ -18,6 +20,12 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     // Get bookings by facility
     List<Booking> findByFacilityId(Long facilityId);
+
+    // Find booking by QR token
+    Optional<Booking> findByQrToken(String qrToken);
+
+    // Check whether QR token already exists
+    boolean existsByQrToken(String qrToken);
 
     // Check for conflicting bookings
     @Query("SELECT COUNT(b) > 0 FROM Booking b WHERE " +
