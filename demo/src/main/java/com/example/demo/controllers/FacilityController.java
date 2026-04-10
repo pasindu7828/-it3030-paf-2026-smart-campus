@@ -8,7 +8,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.ModelAttribute;
 
 import java.util.List;
 import java.util.Map;
@@ -33,10 +32,10 @@ public class FacilityController {
     @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER', 'MANAGER', 'ADMIN')")
     public ResponseEntity<?> getFacilityById(@PathVariable Long id) {
         try {
-            Facility facility = facilityService.getFacilityById(id);
+            Facility facility = facilityService.getFacilityById(id); 
             return ResponseEntity.ok(facility);
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.notFound().build();  // Return 404 if facility not found
         }
     }
 
