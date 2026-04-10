@@ -6,6 +6,7 @@ import com.example.demo.model.TicketStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -43,4 +44,12 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
     // Get tickets by resource
     List<Ticket> findByResourceName(String resourceName);
+
+    // Get active tickets for duplicate detection
+    @Query("""
+        SELECT t FROM Ticket t
+        WHERE t.status IN ('OPEN', 'IN_PROGRESS', 'RESOLVED')
+        ORDER BY t.createdAt DESC
+    """)
+    List<Ticket> findActiveTicketsForDuplicateCheck();
 }

@@ -41,6 +41,15 @@ public class Booking {
 
     private String rejectionReason;
 
+    @Column(unique = true)
+    private String qrToken;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean checkedIn = false;
+
+    private LocalDateTime checkedInAt;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
@@ -52,6 +61,10 @@ public class Booking {
         updatedAt = LocalDateTime.now();
         if (status == null) {
             status = BookingStatus.PENDING;
+        }
+
+        if (checkedIn == null) {
+            checkedIn = false;
         }
     }
 

@@ -20,7 +20,7 @@ public class CommentService {
     private final TicketRepository ticketRepository;
     private final NotificationService notificationService;
 
-    // Add comment to ticket
+    // Add comment to ticket.
     @Transactional
     public Comment addComment(Long ticketId, CommentDTO dto, User author) {
         Ticket ticket = ticketRepository.findById(ticketId)
@@ -76,7 +76,7 @@ public class CommentService {
         return commentRepository.save(comment);
     }
 
-    // Delete comment (author or admin)
+    // Delete comment (author or admin) 
     @Transactional
     public void deleteComment(Long commentId, User currentUser) {
         Comment comment = commentRepository.findById(commentId)
