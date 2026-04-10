@@ -165,7 +165,7 @@ public class TicketController {
         }
     }
 
-    // Reject ticket (ADMIN, MANAGER)
+    // Reject the ticket (ADMIN, MANAGER)
     @PutMapping("/{id}/reject")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<?> rejectTicket(@PathVariable Long id, @RequestBody Map<String, String> request) {
