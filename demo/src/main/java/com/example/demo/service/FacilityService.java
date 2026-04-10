@@ -327,7 +327,7 @@ public class FacilityService {
         return String.format("%02d:00 - %02d:00", hour, nextHour);
     }
 
-    private Map<String, Object> buildFacilityUsageItem(Facility facility, Long bookingCount) {
+    private Map<String, Object> buildFacilityUsageItem(Facility facility, Long bookingCount) { // Helper method to build facility usage item for analytics
         Map<String, Object> item = new LinkedHashMap<>();
         item.put("facilityId", facility.getId());
         item.put("facilityName", facility.getName());
