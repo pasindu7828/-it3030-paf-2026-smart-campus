@@ -5,7 +5,6 @@ import com.example.demo.dto.TicketUpdateDTO;
 import com.example.demo.model.*;
 import com.example.demo.repository.TicketRepository;
 import com.example.demo.repository.UserRepository;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,9 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,22 +26,28 @@ public class TicketService {
     private static final int MAX_ATTACHMENTS = 3;
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
-    // Create a new ticket 
+    private static final Set<String> STOP_WORDS = Set.of(
+            "the", "a", "an", "is", "are", "was", "were", "be", "been",
+            "to", "of", "in", "on", "at", "for", "with", "by", "from",
+            "and", "or", "but", "my", "our", "your", "their", "this", "that",
+            "it", "as", "into", "about", "not", "no", "yes", "have", "has",
+            "had", "do", "does", "did", "can", "could", "will", "would"
+    );
+
+    // Create a new ticket
     @Transactional
     public Ticket createTicket(TicketDTO dto, User user) {
-        // Validate attachments
         if (dto.getAttachments() != null && dto.getAttachments().size() > MAX_ATTACHMENTS) {
             throw new RuntimeException("Maximum " + MAX_ATTACHMENTS + " attachments allowed");
         }
 
-        // Create ticket
         Ticket ticket = Ticket.builder()
                 .title(dto.getTitle())
                 .description(dto.getDescription())
                 .category(dto.getCategory())
                 .priority(TicketPriority.valueOf(dto.getPriority().toUpperCase()))
                 .status(TicketStatus.OPEN)
-                .location(dto.getLocation()) 
+                .location(dto.getLocation())
                 .resourceName(dto.getResourceName())
                 .contactEmail(dto.getContactEmail())
                 .contactPhone(dto.getContactPhone())
@@ -53,7 +56,6 @@ public class TicketService {
 
         Ticket savedTicket = ticketRepository.save(ticket);
 
-        // Upload attachments to Cloudinary
         if (dto.getAttachments() != null) {
             for (MultipartFile file : dto.getAttachments()) {
                 if (!file.isEmpty()) {
@@ -62,10 +64,8 @@ public class TicketService {
             }
         }
 
-        // Save again after attachments are added
         savedTicket = ticketRepository.save(savedTicket);
 
-        // Notify managers/technicians
         notificationService.notifyManagers(
                 "New ticket created",
                 "Ticket #" + savedTicket.getId() + ": " + savedTicket.getTitle()
@@ -74,14 +74,127 @@ public class TicketService {
         return savedTicket;
     }
 
+    // Duplicate ticket detection
+    @Transactional(readOnly = true)
+    public Map<String, Object> checkDuplicateTickets(
+            String title,
+            String description,
+            String location,
+            String resourceName,
+            String category
+    ) {
+        String incomingText = buildComparableText(title, description, location, resourceName, category);
+        Set<String> incomingKeywords = extractKeywords(incomingText);
+
+        if (incomingKeywords.isEmpty()) {
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("duplicateFound", false);
+            response.put("matches", List.of());
+            return response;
+        }
+
+        List<Map<String, Object>> matches = ticketRepository.findActiveTicketsForDuplicateCheck()
+                .stream()
+                .map(ticket -> buildDuplicateMatch(ticket, incomingKeywords))
+                .filter(Objects::nonNull)
+                .sorted((a, b) -> Double.compare(
+                        ((Number) b.get("similarityScore")).doubleValue(),
+                        ((Number) a.get("similarityScore")).doubleValue()
+                ))
+                .limit(5)
+                .collect(Collectors.toList());
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("duplicateFound", !matches.isEmpty());
+        response.put("matches", matches);
+        return response;
+    }
+
+    private Map<String, Object> buildDuplicateMatch(Ticket ticket, Set<String> incomingKeywords) {
+        String existingText = buildComparableText(
+                ticket.getTitle(),
+                ticket.getDescription(),
+                ticket.getLocation(),
+                ticket.getResourceName(),
+                ticket.getCategory()
+        );
+
+        Set<String> existingKeywords = extractKeywords(existingText);
+
+        if (existingKeywords.isEmpty()) {
+            return null;
+        }
+
+        Set<String> commonKeywords = new LinkedHashSet<>(incomingKeywords);
+        commonKeywords.retainAll(existingKeywords);
+
+        if (commonKeywords.isEmpty()) {
+            return null;
+        }
+
+        double similarityScore = (double) commonKeywords.size()
+                / Math.max(Math.min(incomingKeywords.size(), existingKeywords.size()), 1);
+
+        if (similarityScore < 0.35) {
+            return null;
+        }
+
+        Map<String, Object> item = new LinkedHashMap<>();
+        item.put("id", ticket.getId());
+        item.put("title", ticket.getTitle());
+        item.put("description", ticket.getDescription());
+        item.put("status", ticket.getStatus() != null ? ticket.getStatus().name() : "UNKNOWN");
+        item.put("category", ticket.getCategory());
+        item.put("location", ticket.getLocation());
+        item.put("resourceName", ticket.getResourceName());
+        item.put("createdAt", ticket.getCreatedAt());
+        item.put("similarityScore", Math.round(similarityScore * 100.0) / 100.0);
+        item.put("matchedKeywords", new ArrayList<>(commonKeywords));
+
+        return item;
+    }
+
+    private String buildComparableText(
+            String title,
+            String description,
+            String location,
+            String resourceName,
+            String category
+    ) {
+        return String.join(" ",
+                safe(title),
+                safe(description),
+                safe(location),
+                safe(resourceName),
+                safe(category)
+        ).trim();
+    }
+
+    private Set<String> extractKeywords(String text) {
+        if (text == null || text.isBlank()) {
+            return Set.of();
+        }
+
+        return Arrays.stream(text.toLowerCase()
+                        .replaceAll("[^a-z0-9\\s]", " ")
+                        .split("\\s+"))
+                .map(String::trim)
+                .filter(word -> !word.isBlank())
+                .filter(word -> word.length() > 2)
+                .filter(word -> !STOP_WORDS.contains(word))
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value;
+    }
+
     // Validate and upload attachment to Cloudinary
     private void validateAndUploadAttachment(MultipartFile file, Ticket ticket) {
-        // Validate file size
         if (file.getSize() > MAX_FILE_SIZE) {
             throw new RuntimeException("File size exceeds 5MB limit");
         }
 
-        // Validate file type
         String[] allowedTypes = {"image/jpeg", "image/png", "image/jpg", "image/gif"};
         boolean isValidType = false;
         for (String type : allowedTypes) {
@@ -96,13 +209,11 @@ public class TicketService {
         }
 
         try {
-            // Upload to Cloudinary
             Map<String, Object> uploadResult = cloudinaryService.uploadImage(file);
 
             String url = (String) uploadResult.get("secure_url");
             String publicId = (String) uploadResult.get("public_id");
 
-            // Create attachment record
             Attachment attachment = Attachment.builder()
                     .fileName(file.getOriginalFilename())
                     .fileType(file.getContentType())
@@ -130,12 +241,10 @@ public class TicketService {
                 .orElseThrow(() -> new RuntimeException("Attachment not found"));
 
         try {
-            // Delete from Cloudinary
             if (attachment.getPublicId() != null) {
                 cloudinaryService.deleteImage(attachment.getPublicId());
             }
 
-            // Remove from database
             ticket.getAttachments().remove(attachment);
             ticketRepository.save(ticket);
 
@@ -226,7 +335,6 @@ public class TicketService {
             throw new RuntimeException("Cannot delete after technician assignment");
         }
 
-        // Delete ticket attachments from Cloudinary first
         if (ticket.getAttachments() != null) {
             for (Attachment attachment : ticket.getAttachments()) {
                 try {
