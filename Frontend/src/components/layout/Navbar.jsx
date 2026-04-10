@@ -92,7 +92,7 @@ const Navbar = () => {
     { label: "Home", to: "/", exact: true },
     { label: "About Us", href: "/#about" },
     { label: "Facilities", to: "/facilities", exact: true },
-    { label: "Contact Us", to: "/contact", exact: true },
+    { label: "Contact Us", href: "/#contact" },
   ];
 
   const privateLinks = useMemo(() => {
