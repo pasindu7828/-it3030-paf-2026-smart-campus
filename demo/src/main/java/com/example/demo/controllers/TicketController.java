@@ -23,7 +23,7 @@ public class TicketController {
     private final TicketService ticketService;
     private final UserRepository userRepository;
 
-    // Create a ticket (STUDENT, LECTURER)
+    // Create a ticket (STUDENT and LECTURER)
     @PostMapping(consumes = {"multipart/form-data"})
     @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER')")
     public ResponseEntity<?> createTicket(@ModelAttribute TicketDTO dto, Authentication auth) {
@@ -39,7 +39,7 @@ public class TicketController {
         }
     }
 
-    // Get my tickets (STUDENT, LECTURER)
+    // Get my tickets (STUDENT and LECTURER)
     @GetMapping("/my")
     @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER')")
     public ResponseEntity<?> getMyTickets(Authentication auth) {
