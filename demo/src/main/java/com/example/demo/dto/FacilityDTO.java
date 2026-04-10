@@ -1,6 +1,7 @@
 package com.example.demo.dto;
 
 import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
 
 @Data
 public class FacilityDTO {
@@ -11,4 +12,5 @@ public class FacilityDTO {
     private String description;
     private String availabilitySchedule;
     private String imageUrl;
+    private MultipartFile imageFile;
 }

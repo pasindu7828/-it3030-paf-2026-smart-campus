@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class CloudinaryConfig {
+public class CloudinaryConfig {    // Cloudinary configuration
 
     @Value("${cloudinary.cloud-name}")
     private String cloudName;
