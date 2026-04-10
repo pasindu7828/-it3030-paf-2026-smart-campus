@@ -58,7 +58,7 @@ public class Announcement {
         }
     }
 
-    @PreUpdate
+    @PreUpdate // This method will be called before the entity is updated in the database
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
